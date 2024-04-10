@@ -100,7 +100,11 @@ before the bracket (nil).")
    '(">l" "evil-lispops-open-right-adjacent-child-end")
    '("<l" "evil-lispops-open-right-adjacent-child-beg")
    '(">L" "evil-lispops-goto-right-adjacent-child-end")
-   '("<L" "evil-lispops-goto-right-adjacent-child-beg"))
+   '("<L" "evil-lispops-goto-right-adjacent-child-beg")
+   '(">n" "evil-lispops-open-right-sibling-end")
+   '("<n" "evil-lispops-open-right-sibling-beg")
+   '(">N" "evil-lispops-goto-right-sibling-end")
+   '("<N" "evil-lispops-goto-right-sibling-beg"))
   "Bindings set when `evil-lispops-mode’ is enabled.")
 
 ;;;; Helper Functions
@@ -324,6 +328,43 @@ inside the paren block or outside."
     (progn
       (evil-lispops-goto-left-adjacent-child-beg count)
       (evil-lispops-open-end))))
+
+(defun evil-lispops-goto-right-sibling-beg (&optional count goto-end?)
+  "Go to beginning of right sibling paren pair.  Accepts `COUNT’.
+`GOTO-END?’ for the reverse operation."
+  (interactive "P")
+  (let ((count (or count 1))
+        (point (point)))
+    (progn
+      (evil-lispops-goto-end)
+      (goto-char (+ (point) 1))
+      (if (looking-at ")")
+          (goto-char point)
+        (if goto-end?
+            (evil-lispops-goto-right-adjacent-child-end count)
+          (evil-lispops-goto-right-adjacent-child-beg count))))))
+
+(defun evil-lispops-goto-right-sibling-end (&optional count)
+  "Go to end of right sibling paren pair.  Accepts `COUNT’."
+  (interactive "P")
+  (let ((count (or count 1)))
+    (evil-lispops-goto-right-sibling-beg count t)))
+
+(defun evil-lispops-open-right-sibling-beg (&optional count)
+  "Open at end of right sibling paren pair.  Accepts `COUNT’."
+  (interactive "P")
+  (let ((count (or count 1)))
+    (progn
+      (evil-lispops-goto-right-sibling-beg count)
+      (evil-lispops-goto-beg))))
+
+(defun evil-lispops-open-right-sibling-end (&optional count)
+  "Go to end of right sibling paren pair.  Accepts `COUNT’."
+  (interactive "P")
+  (let ((count (or count 1)))
+    (progn
+      (evil-lispops-goto-right-sibling-beg count t)
+      (evil-lispops-goto-end))))
 
 ;;;; Mode
 (defun evil-lispops--define-key (binding function)
