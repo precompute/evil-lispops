@@ -5,8 +5,8 @@
 ;; Author: precompute <git@precompute.net>
 ;; URL: https://github.com/precompute/evil-lispops
 ;; Created: April 1, 2024
-;; Modified: April 9, 2024
-;; Version: 0.3.0
+;; Modified: April 10, 2024
+;; Version: 0.5.0
 ;; Package-Requires: ((emacs "26.1") (evil "1.2.10"))
 
 ;; evil-lispops - operations for editing lisp evilly
@@ -33,9 +33,8 @@
 
 ;; - Operators always open inside pairs.
 ;; - All operators accept prefix numbers.
-;; - The `<’ and `>’ prefixes overwrite some defaults,but I use them
-;; very infrequently, so I don't mind making a visual selection
-;; first.
+;; - The `<’ and `>’ prefixes overwrite some defaults, but I use them
+;; very infrequently and I don't mind making a visual selection first.
 
 ;; | Operator | Action                                         |
 ;; |----------+------------------------------------------------|
@@ -59,13 +58,50 @@
 ;; | <l       | Open at beg of right adjacent child paren pair |
 ;; | >L       | Go to end of right adjacent child paren pair   |
 ;; | <L       | Go to beg of right adjacent child paren pair   |
+;; | >n       | Open at end of right sibling paren pair        |
+;; | <n       | Open at beg of right sibling paren pair        |
+;; | >N       | Go to end of right sibling paren pair          |
+;; | <N       | Go to beg of right sibling paren pair          |
+;; | >p       | Open at end of previous sibling paren pair     |
+;; | <p       | Open at beg of previous sibling paren pair     |
+;; | >P       | Go to end of previous sibling paren pair       |
+;; | <P       | Go to beg of previous sibling paren pair       |
 
 ;;; Code:
 (require 'evil)
 
 ;;;; Variables
+(defvar evil-lispops-setup-done? nil
+  "Whether `evil-lispops-setup’ has been invoked successfully in the
+current instance.")
+
 (defvar evil-lispops-open-inside t
-  "Whether evil-lispops-open-* commands open inside the bracket (t) or before the bracket (nil).")
+  "Whether evil-lispops-open-* commands open inside the bracket (t) or
+before the bracket (nil).")
+
+(defvar evil-lispops-bindings
+  (list
+   '(">." "evil-lispops-goto-end")
+   '("<." "evil-lispops-goto-beg")
+   '(">i" "evil-lispops-open-end")
+   '("<i" "evil-lispops-open-beg")
+   '(">j" "evil-lispops-open-child-end")
+   '("<j" "evil-lispops-open-child-beg")
+   '(">J" "evil-lispops-goto-child-end")
+   '("<J" "evil-lispops-goto-child-beg")
+   '(">k" "evil-lispops-open-parent-end")
+   '("<k" "evil-lispops-open-parent-beg")
+   '(">K" "evil-lispops-goto-parent-end")
+   '("<K" "evil-lispops-goto-parent-beg")
+   '(">h" "evil-lispops-open-left-adjacent-child-end")
+   '("<h" "evil-lispops-open-left-adjacent-child-beg")
+   '(">H" "evil-lispops-goto-left-adjacent-child-end")
+   '("<H" "evil-lispops-goto-left-adjacent-child-beg")
+   '(">l" "evil-lispops-open-right-adjacent-child-end")
+   '("<l" "evil-lispops-open-right-adjacent-child-beg")
+   '(">L" "evil-lispops-goto-right-adjacent-child-end")
+   '("<L" "evil-lispops-goto-right-adjacent-child-beg"))
+  "Bindings set when `evil-lispops-mode’ is enabled.")
 
 ;;;; Helper Functions
 (defmacro evil-lispops--dec-var (var)
@@ -73,8 +109,8 @@
   `(setq ,var (- ,var 1)))
 
 (defun evil-lispops--get-range (&optional count inclusive?)
-  "Use `evil-select-paren’ to get the value of points at the ends of a paren pair.
-Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is
+  "Use `evil-select-paren’ to get the value of points at the ends of a
+paren pair. Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is
 inside the paren block or outside."
   (let ((count (or count 1)))
     ;; evil-select-paren does not work when bracket is at [:space:]+(eobp)
@@ -270,21 +306,57 @@ inside the paren block or outside."
   (interactive "P")
   (let ((count (or count 1)))
     (progn
-     (evil-lispops-goto-left-adjacent-child-beg count)
-     (evil-lispops-goto-end))))
+      (evil-lispops-goto-left-adjacent-child-beg count)
+      (evil-lispops-goto-end))))
 
 (defun evil-lispops-open-left-adjacent-child-beg (&optional count)
   "Open at beginning of left adjacent child paren pair.  Accepts `COUNT’."
   (interactive "P")
   (let ((count (or count 1)))
     (progn
-     (evil-lispops-goto-left-adjacent-child-end count)
-     (evil-lispops-open-beg))))
+      (evil-lispops-goto-left-adjacent-child-end count)
+      (evil-lispops-open-beg))))
 
 (defun evil-lispops-open-left-adjacent-child-end (&optional count)
   "Open at end of left adjacent child paren pair.  Accepts `COUNT’."
   (interactive "P")
   (let ((count (or count 1)))
     (progn
-     (evil-lispops-goto-left-adjacent-child-beg count)
-     (evil-lispops-open-end))))
+      (evil-lispops-goto-left-adjacent-child-beg count)
+      (evil-lispops-open-end))))
+
+;;;; Mode
+(defun evil-lispops--define-key (binding function)
+  "Define a key with `evil-define-minor-mode-key’.
+Needs `FUNCTION’ that will be bound to `BINDING’."
+  (let ((function (intern (car function))))
+    (evil-define-key
+      'normal evil-lispops-mode-map binding function)))
+
+(defun evil-lispops--bind-keys ()
+  "Bind keys for evil-lispops-mode."
+  (evil-define-key 'normal evil-lispops-mode-map (kbd ">>") 'evil-shift-right)
+  (evil-define-key 'normal evil-lispops-mode-map (kbd "<<") 'evil-shift-left)
+  (dolist (p evil-lispops-bindings)
+    (evil-lispops--define-key (car p) (cdr p))))
+
+(defun evil-lispops-setup ()
+  "Setup bindings for `evil-lispops’."
+  (interactive)
+  (unless evil-lispops-setup-done?
+    (progn
+      (evil-lispops--bind-keys)
+      (add-hook 'emacs-lisp-mode-hook 'evil-lispops-mode)
+      (setq evil-lispops-setup-done? t))))
+
+(defvar evil-lispops-mode-map (make-sparse-keymap)
+  "Keymap used by `evil-lispops-mode’.")
+
+(define-minor-mode evil-lispops-mode
+  "Edit lisp evilly.  Adds commands to normal-mode that help you
+jump to / open at the beginning / end of the current / parent / adjacent
+paren block."
+  (evil-lispops-setup))
+
+(provide 'evil-lispops)
+;;; evil-lispops.el ends here
