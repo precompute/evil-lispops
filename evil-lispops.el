@@ -6,7 +6,7 @@
 ;; URL: https://github.com/precompute/evil-lispops
 ;; Created: April 1, 2024
 ;; Modified: April 10, 2024
-;; Version: 0.5.0
+;; Version: 0.8.0
 ;; Package-Requires: ((emacs "26.1") (evil "1.2.10"))
 
 ;; evil-lispops - operations for editing lisp evilly
@@ -104,7 +104,11 @@ before the bracket (nil).")
    '(">n" "evil-lispops-open-right-sibling-end")
    '("<n" "evil-lispops-open-right-sibling-beg")
    '(">N" "evil-lispops-goto-right-sibling-end")
-   '("<N" "evil-lispops-goto-right-sibling-beg"))
+   '("<N" "evil-lispops-goto-right-sibling-beg")
+   '(">p" "evil-lispops-open-left-sibling-end")
+   '("<p" "evil-lispops-open-left-sibling-beg")
+   '(">P" "evil-lispops-goto-left-sibling-end")
+   '("<P" "evil-lispops-goto-left-sibling-beg"))
   "Bindings set when `evil-lispops-mode’ is enabled.")
 
 ;;;; Helper Functions
@@ -366,13 +370,50 @@ inside the paren block or outside."
       (evil-lispops-goto-right-sibling-beg count t)
       (evil-lispops-goto-end))))
 
+(defun evil-lispops-goto-left-sibling-beg (&optional count goto-end?)
+  "Go to beginning of left sibling paren pair.  Accepts `COUNT’.
+`GOTO-END?’ for the reverse operation."
+  (interactive "P")
+  (let ((count (or count 1))
+        (point (point)))
+    (progn
+      (evil-lispops-goto-beg nil t)
+      (if (looking-back "(")
+          (goto-char point)
+        (progn
+          (goto-char (- (point) 1))
+          (if goto-end?
+            (evil-lispops-goto-left-adjacent-child-end count)
+          (evil-lispops-goto-left-adjacent-child-beg count)))))))
+
+(defun evil-lispops-goto-left-sibling-end (&optional count)
+  "Go to end of left sibling paren pair.  Accepts `COUNT’."
+  (interactive "P")
+  (let ((count (or count 1)))
+    (evil-lispops-goto-left-sibling-beg count t)))
+
+(defun evil-lispops-open-left-sibling-beg (&optional count)
+  "Open at end of left sibling paren pair.  Accepts `COUNT’."
+  (interactive "P")
+  (let ((count (or count 1)))
+    (progn
+      (evil-lispops-goto-left-sibling-beg count)
+      (evil-lispops-goto-beg))))
+
+(defun evil-lispops-open-left-sibling-end (&optional count)
+  "Go to end of left sibling paren pair.  Accepts `COUNT’."
+  (interactive "P")
+  (let ((count (or count 1)))
+    (progn
+      (evil-lispops-goto-left-sibling-beg count t)
+      (evil-lispops-goto-end))))
+
 ;;;; Mode
 (defun evil-lispops--define-key (binding function)
   "Define a key with `evil-define-minor-mode-key’.
 Needs `FUNCTION’ that will be bound to `BINDING’."
-  (let ((function (intern (car function))))
-    (evil-define-key
-      'normal evil-lispops-mode-map binding function)))
+  (evil-define-key
+    'normal evil-lispops-mode-map binding (intern (car function))))
 
 (defun evil-lispops--bind-keys ()
   "Bind keys for evil-lispops-mode."

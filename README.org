@@ -1,7 +1,16 @@
 * Evil-lispops
 operations for editing lisp evilly
 
- Tentative layout:
+#+HTML: <img src=".assets/emacslisp.png" align="center">
+
+This package is currently in *ALPHA* status.  It mostly works, but has rough edges.
+
+** Compatibility
+This *should* work with old versions of evil.
+
+The mode map =evil-lispops-mode-map= uses the ~<~ and ~>~ keys.  The =evil-shift-left= and =right= keys are moved to =<<= and =>>= respectively when the mode is active.
+
+** Tentative layout:
  
 | Operator | Action                                         |
 |----------+------------------------------------------------|
@@ -25,3 +34,11 @@ operations for editing lisp evilly
 | <l       | Open at beg of right adjacent child paren pair |
 | >L       | Go to end of right adjacent child paren pair   |
 | <L       | Go to beg of right adjacent child paren pair   |
+| >n       | Open at end of right sibling paren pair        |
+| <n       | Open at beg of right sibling paren pair        |
+| >N       | Go to end of right sibling paren pair          |
+| <N       | Go to beg of right sibling paren pair          |
+| >p       | Open at end of left sibling paren pair         |
+| <p       | Open at beg of left sibling paren pair         |
+| >P       | Go to end of left sibling paren pair           |
+| <P       | Go to beg of left sibling paren pair           |
