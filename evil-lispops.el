@@ -1,12 +1,12 @@
-;;; evil-lispops.el --- operations for editing lisp evilly  -*- lexical-binding: t -*-
+;;; evil-lispops.el --- Operations for editing lisp evilly  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2024 precompute
 
 ;; Author: precompute <git@precompute.net>
 ;; URL: https://github.com/precompute/evil-lispops
 ;; Created: April 1, 2024
-;; Modified: April 10, 2024
-;; Version: 0.8.0
+;; Modified: April 11, 2024
+;; Version: 0.8.5
 ;; Package-Requires: ((emacs "26.1") (evil "1.2.10"))
 
 ;; evil-lispops - operations for editing lisp evilly
@@ -72,12 +72,10 @@
 
 ;;;; Variables
 (defvar evil-lispops-setup-done? nil
-  "Whether `evil-lispops-setup’ has been invoked successfully in the
-current instance.")
+  "Whether `evil-lispops-setup’ has been invoked successfully in the current instance.")
 
 (defvar evil-lispops-open-inside t
-  "Whether evil-lispops-open-* commands open inside the bracket (t) or
-before the bracket (nil).")
+  "Whether evil-lispops-open-* commands open inside the bracket (t) or before the bracket (nil).")
 
 (defvar evil-lispops-bindings
   (list
@@ -117,9 +115,8 @@ before the bracket (nil).")
   `(setq ,var (- ,var 1)))
 
 (defun evil-lispops--get-range (&optional count inclusive?)
-  "Use `evil-select-paren’ to get the value of points at the ends of a
-paren pair. Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is
-inside the paren block or outside."
+  "Use `evil-select-paren’ to get the value of points at the ends of a paren pair.
+Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren block or outside."
   (let ((count (or count 1)))
     ;; evil-select-paren does not work when bracket is at [:space:]+(eobp)
     ;; (if (and (or (eobp)
@@ -416,7 +413,7 @@ Needs `FUNCTION’ that will be bound to `BINDING’."
     'normal evil-lispops-mode-map binding (intern (car function))))
 
 (defun evil-lispops--bind-keys ()
-  "Bind keys for evil-lispops-mode."
+  "Bind keys for `evil-lispops-mode’."
   (evil-define-key 'normal evil-lispops-mode-map (kbd ">>") 'evil-shift-right)
   (evil-define-key 'normal evil-lispops-mode-map (kbd "<<") 'evil-shift-left)
   (dolist (p evil-lispops-bindings)
@@ -435,9 +432,7 @@ Needs `FUNCTION’ that will be bound to `BINDING’."
   "Keymap used by `evil-lispops-mode’.")
 
 (define-minor-mode evil-lispops-mode
-  "Edit lisp evilly.  Adds commands to normal-mode that help you
-jump to / open at the beginning / end of the current / parent / adjacent
-paren block."
+  "Edit Lisp evilly.  Adds commands to evil’s normal mode that help you jump to / open at the beginning / end of the current / parent / adjacent paren block."
   (evil-lispops-setup))
 
 (provide 'evil-lispops)
