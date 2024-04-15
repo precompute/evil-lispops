@@ -5,8 +5,8 @@
 ;; Author: precompute <git@precompute.net>
 ;; URL: https://github.com/precompute/evil-lispops
 ;; Created: April 1, 2024
-;; Modified: April 11, 2024
-;; Version: 0.8.5
+;; Modified: April 15, 2024
+;; Version: 0.8.6
 ;; Package-Requires: ((emacs "26.1") (evil "1.2.10"))
 
 ;; evil-lispops - operations for editing lisp evilly
@@ -72,10 +72,12 @@
 
 ;;;; Variables
 (defvar evil-lispops-setup-done? nil
-  "Whether `evil-lispops-setup’ has been invoked successfully in the current instance.")
+  "Whether `evil-lispops-setup’ has been invoked successfully in the
+current instance.")
 
 (defvar evil-lispops-open-inside t
-  "Whether evil-lispops-open-* commands open inside the bracket (t) or before the bracket (nil).")
+  "Whether evil-lispops-open-* commands open inside the bracket (t) or
+before the bracket (nil).")
 
 (defvar evil-lispops-bindings
   (list
@@ -115,8 +117,9 @@
   `(setq ,var (- ,var 1)))
 
 (defun evil-lispops--get-range (&optional count inclusive?)
-  "Use `evil-select-paren’ to get the value of points at the ends of a paren pair.
-Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren block or outside."
+  "Use `evil-select-paren’ to get the value of points at the ends of a
+paren pair. Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is
+inside the paren block or outside."
   (let ((count (or count 1)))
     ;; evil-select-paren does not work when bracket is at [:space:]+(eobp)
     ;; (if (and (or (eobp)
