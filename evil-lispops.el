@@ -199,7 +199,7 @@ Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren 
   (interactive "P")
   (let ((count (or count 1))
         (point (point)))
-    (if evil-lispops-goto-parent-end
+    (if evil-lispops-open-inside
         (evil-lispops-goto-parent-end count)
       (evil-lispops-goto-parent-end count t))
     (unless (eq (point) point)
@@ -212,8 +212,7 @@ Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren 
   (let ((count (or count 1))
         (point (point)))
     (unless relative? (evil-lispops-goto-beg))
-    (let ((parentrange (evil-lispops--get-range))
-          (postloop? nil))
+    (let ((parentrange (evil-lispops--get-range)))
       (while (> count 0)
         (progn
           (while (and (not (looking-at "("))
@@ -357,7 +356,7 @@ Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren 
   (let ((count (or count 1)))
     (progn
       (evil-lispops-goto-right-sibling-beg count)
-      (evil-lispops-goto-beg))))
+      (evil-lispops-open-beg))))
 
 (defun evil-lispops-open-right-sibling-end (&optional count)
   "Go to end of right sibling paren pair.  Accepts `COUNT’."
@@ -365,7 +364,7 @@ Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren 
   (let ((count (or count 1)))
     (progn
       (evil-lispops-goto-right-sibling-beg count t)
-      (evil-lispops-goto-end))))
+      (evil-lispops-open-end))))
 
 (defun evil-lispops-goto-left-sibling-beg (&optional count goto-end?)
   "Go to beginning of left sibling paren pair.  Accepts `COUNT’.
@@ -375,7 +374,7 @@ Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren 
         (point (point)))
     (progn
       (evil-lispops-goto-beg nil t)
-      (if (looking-back "(")
+      (if (looking-back "(" nil)
           (goto-char point)
         (progn
           (goto-char (- (point) 1))
@@ -395,7 +394,7 @@ Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren 
   (let ((count (or count 1)))
     (progn
       (evil-lispops-goto-left-sibling-beg count)
-      (evil-lispops-goto-beg))))
+      (evil-lispops-open-beg))))
 
 (defun evil-lispops-open-left-sibling-end (&optional count)
   "Go to end of left sibling paren pair.  Accepts `COUNT’."
@@ -403,7 +402,7 @@ Accepts `COUNT’.  `INCLUSIVE?’ determines whether range is inside the paren 
   (let ((count (or count 1)))
     (progn
       (evil-lispops-goto-left-sibling-beg count t)
-      (evil-lispops-goto-end))))
+      (evil-lispops-open-end))))
 
 ;;;; Mode
 (defun evil-lispops--define-key (binding function)
@@ -423,16 +422,17 @@ Needs `FUNCTION’ that will be bound to `BINDING’."
   "Setup bindings for `evil-lispops’."
   (interactive)
   (unless evil-lispops-setup-done?
-    (progn
-      (evil-lispops--bind-keys)
-      (add-hook 'emacs-lisp-mode-hook 'evil-lispops-mode)
-      (setq evil-lispops-setup-done? t))))
+    (evil-lispops--bind-keys)
+    (setq evil-lispops-setup-done? t)))
 
 (defvar evil-lispops-mode-map (make-sparse-keymap)
   "Keymap used by `evil-lispops-mode’.")
 
 (define-minor-mode evil-lispops-mode
-  "Edit Lisp evilly.  Adds commands to evil’s normal mode that help you jump to / open at the beginning / end of the current / parent / adjacent paren block."
+  "Edit Lisp evilly.  Adds commands to evil’s normal mode that help you
+jump to / open at the beginning / end of the current / parent / adjacent
+paren block."
+  :lighter nil
   (evil-lispops-setup))
 
 (provide 'evil-lispops)

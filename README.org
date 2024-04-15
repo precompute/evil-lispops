@@ -10,6 +10,12 @@ This *should* work with old versions of evil.
 
 The mode map =evil-lispops-mode-map= uses the ~<~ and ~>~ keys.  The =evil-shift-left= and =right= keys are moved to =<<= and =>>= respectively when the mode is active.
 
+** Install
+#+BEGIN_SRC elisp
+(use-package evil-lispops
+  :hook (emacs-lisp-mode . evil-lispops-mode))
+#+END_SRC
+
 ** Tentative layout:
  
 | Operator | Action                                         |
