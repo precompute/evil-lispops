@@ -5,8 +5,8 @@
 ;; Author: precompute <git@precompute.net>
 ;; URL: https://github.com/precompute/evil-lispops
 ;; Created: April 1, 2024
-;; Modified: April 15, 2024
-;; Version: 0.8.6
+;; Modified: April 17, 2024
+;; Version: 0.9.0
 ;; Package-Requires: ((emacs "26.1") (evil "1.2.10"))
 
 ;; evil-lispops - operations for editing lisp evilly
@@ -71,9 +71,11 @@
 (require 'evil)
 
 ;;;; Variables
-(defvar evil-lispops-open-inside t
-  "Whether evil-lispops-open-* commands open inside the bracket (t) or
-before the bracket (nil).")
+(defcustom evil-lispops-open-inside t
+  "If non-nil, evil-lispops-open-* commands open inside the bracket.  If nil,
+they open outside the bracket."
+  :type 'boolean
+  :group 'evil-lispops)
 
 (defvar evil-lispops-bindings
   (list
@@ -395,6 +397,7 @@ Needs FUNCTION that will be bound to BINDING."
 (define-minor-mode evil-lispops-mode
   "Edit Lisp evilly.  Adds commands to edit and navigate sexps."
   :lighter nil
+  :group 'evil-lispops
   (evil-lispops-setup))
 
 (provide 'evil-lispops)
