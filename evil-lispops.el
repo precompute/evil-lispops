@@ -5,8 +5,8 @@
 ;; Author: precompute <git@precompute.net>
 ;; URL: https://github.com/precompute/evil-lispops
 ;; Created: April 1, 2024
-;; Modified: April 17, 2024
-;; Version: 0.9.0
+;; Modified: April 18, 2024
+;; Version: 0.10.0
 ;; Package-Requires: ((emacs "26.1") (evil "1.2.10"))
 
 ;; evil-lispops - operations for editing lisp evilly
@@ -77,38 +77,6 @@ they open outside the bracket."
   :type 'boolean
   :group 'evil-lispops)
 
-(defvar evil-lispops-bindings
-  (list
-   '(">." "evil-lispops-goto-end")
-   '("<." "evil-lispops-goto-beg")
-   '(">i" "evil-lispops-open-end")
-   '("<i" "evil-lispops-open-beg")
-   '(">j" "evil-lispops-open-child-end")
-   '("<j" "evil-lispops-open-child-beg")
-   '(">J" "evil-lispops-goto-child-end")
-   '("<J" "evil-lispops-goto-child-beg")
-   '(">k" "evil-lispops-open-parent-end")
-   '("<k" "evil-lispops-open-parent-beg")
-   '(">K" "evil-lispops-goto-parent-end")
-   '("<K" "evil-lispops-goto-parent-beg")
-   '(">h" "evil-lispops-open-left-adjacent-child-end")
-   '("<h" "evil-lispops-open-left-adjacent-child-beg")
-   '(">H" "evil-lispops-goto-left-adjacent-child-end")
-   '("<H" "evil-lispops-goto-left-adjacent-child-beg")
-   '(">l" "evil-lispops-open-right-adjacent-child-end")
-   '("<l" "evil-lispops-open-right-adjacent-child-beg")
-   '(">L" "evil-lispops-goto-right-adjacent-child-end")
-   '("<L" "evil-lispops-goto-right-adjacent-child-beg")
-   '(">n" "evil-lispops-open-right-sibling-end")
-   '("<n" "evil-lispops-open-right-sibling-beg")
-   '(">N" "evil-lispops-goto-right-sibling-end")
-   '("<N" "evil-lispops-goto-right-sibling-beg")
-   '(">p" "evil-lispops-open-left-sibling-end")
-   '("<p" "evil-lispops-open-left-sibling-beg")
-   '(">P" "evil-lispops-goto-left-sibling-end")
-   '("<P" "evil-lispops-goto-left-sibling-beg"))
-  "Bindings set when `evil-lispops-mode’ is enabled.")
-
 ;;;; Helper Functions
 (defun evil-lispops--get-range (&optional n inclusivep)
   "Use `evil-select-paren’ to get the value of points at the ends of a
@@ -176,22 +144,22 @@ placement style."
 RELATIVEP for relative child."
   (interactive "P")
   (let ((count (or n 1))
-        (point (point)))
+        (point (point))
+        (parentrange (evil-lispops--get-range)))
     (unless relativep (evil-lispops-goto-beg))
-    (let ((parentrange (evil-lispops--get-range)))
-      (while (> count 0)
-        (while (and (not (looking-at "("))
-                    (> (cadr parentrange) (point)))
-          (evil-forward-WORD-begin))
-        (evil-lispops-goto-beg nil t)
-        (when (not (= count 1))
-          (evil-lispops-goto-end)
-          (goto-char (+ (point) 1)))
-        (cl-decf count))
-      (if (looking-at "(")
-          (progn (goto-char (+ (point) 1))
-                 (when reversep (evil-lispops-goto-end)))
-        (goto-char point)))))
+    (while (> count 0)
+      (while (and (not (looking-at "("))
+                  (> (cadr parentrange) (point)))
+        (evil-forward-WORD-begin))
+      (evil-lispops-goto-beg nil t)
+      (when (not (= count 1))
+        (evil-lispops-goto-end)
+        (goto-char (+ (point) 1)))
+      (cl-decf count))
+    (if (looking-at "(")
+        (progn (goto-char (+ (point) 1))
+               (when reversep (evil-lispops-goto-end)))
+      (goto-char point))))
 
 (defun evil-lispops-goto-child-end (&optional n)
   "Go to end of Nth child paren pair."
@@ -336,32 +304,54 @@ RELATIVEP for relative child."
   (evil-lispops-open-end))
 
 ;;;; Mode
-(defun evil-lispops--define-key (binding function)
-  "Define a key with `evil-define-minor-mode-key’.
-Needs FUNCTION that will be bound to BINDING."
-  (evil-define-key
-    'normal evil-lispops-mode-map binding (intern (car function))))
+(defvar evil-lispops-mode-map (make-sparse-keymap)
+  "Keymap used by `evil-lispops-mode’.")
 
 (defun evil-lispops--bind-keys ()
   "Bind keys for `evil-lispops-mode’."
-  (evil-define-key 'normal evil-lispops-mode-map (kbd ">>") 'evil-shift-right)
-  (evil-define-key 'normal evil-lispops-mode-map (kbd "<<") 'evil-shift-left)
-  (dolist (p evil-lispops-bindings)
-    (evil-lispops--define-key (car p) (cdr p))))
+  (interactive)
+  (evil-define-key 'normal evil-lispops-mode-map
+    (kbd ">>") #'evil-shift-right
+    (kbd "<<") #'evil-shift-left
+    (kbd ">.") #'evil-lispops-goto-end
+    (kbd "<.") #'evil-lispops-goto-beg
+    (kbd ">i") #'evil-lispops-open-end
+    (kbd "<i") #'evil-lispops-open-beg
+    (kbd ">j") #'evil-lispops-open-child-end
+    (kbd "<j") #'evil-lispops-open-child-beg
+    (kbd ">J") #'evil-lispops-goto-child-end
+    (kbd "<J") #'evil-lispops-goto-child-beg
+    (kbd ">k") #'evil-lispops-open-parent-end
+    (kbd "<k") #'evil-lispops-open-parent-beg
+    (kbd ">K") #'evil-lispops-goto-parent-end
+    (kbd "<K") #'evil-lispops-goto-parent-beg
+    (kbd ">h") #'evil-lispops-open-left-adjacent-child-end
+    (kbd "<h") #'evil-lispops-open-left-adjacent-child-beg
+    (kbd ">H") #'evil-lispops-goto-left-adjacent-child-end
+    (kbd "<H") #'evil-lispops-goto-left-adjacent-child-beg
+    (kbd ">l") #'evil-lispops-open-right-adjacent-child-end
+    (kbd "<l") #'evil-lispops-open-right-adjacent-child-beg
+    (kbd ">L") #'evil-lispops-goto-right-adjacent-child-end
+    (kbd "<L") #'evil-lispops-goto-right-adjacent-child-beg
+    (kbd ">p") #'evil-lispops-open-left-sibling-end
+    (kbd "<p") #'evil-lispops-open-left-sibling-beg
+    (kbd ">P") #'evil-lispops-goto-left-sibling-end
+    (kbd "<P") #'evil-lispops-goto-left-sibling-beg
+    (kbd ">n") #'evil-lispops-open-right-sibling-end
+    (kbd "<n") #'evil-lispops-open-right-sibling-beg
+    (kbd ">N") #'evil-lispops-goto-right-sibling-end
+    (kbd "<N") #'evil-lispops-goto-right-sibling-beg))
 
 (defun evil-lispops-setup ()
   "Setup bindings for `evil-lispops’."
   (interactive)
   (evil-lispops--bind-keys))
 
-(defvar evil-lispops-mode-map (make-sparse-keymap)
-  "Keymap used by `evil-lispops-mode’.")
-
+;;;###autoload
 (define-minor-mode evil-lispops-mode
-  "Edit Lisp evilly.  Adds commands to edit and navigate sexps."
+  "Edit Lisp evilly.  Adds commands to edit and navigate parens."
   :lighter " lispops"
-  :group 'evil-lispops
-  (evil-lispops-setup))
+  :group 'evil-lispops)
 
 (provide 'evil-lispops)
 ;;; evil-lispops.el ends here
