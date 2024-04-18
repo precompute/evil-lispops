@@ -110,86 +110,72 @@ they open outside the bracket."
   "Bindings set when `evil-lispops-mode’ is enabled.")
 
 ;;;; Helper Functions
-(defun evil-lispops--get-range (&optional count inclusivep)
+(defun evil-lispops--get-range (&optional n inclusivep)
   "Use `evil-select-paren’ to get the value of points at the ends of a
-paren pair.  Accepts COUNT.  INCLUSIVEP determines whether range is
+paren pair.  Accepts count N.  INCLUSIVEP determines whether range is
 inside the paren block or outside."
-  (evil-select-paren ?\( ?\) (point) 0 nil (or count 1) inclusivep))
+  (evil-select-paren ?\( ?\) (point) 0 nil (or n 1) inclusivep))
 
 ;;;; Operators:
-(defun evil-lispops-goto-beg (&optional count inclusivep)
-  "Go to beginning of paren pair.  COUNT to enable jumping to nth parent.
-INCLUSIVEP for cursor placement style."
+(defun evil-lispops-goto-beg (&optional n inclusivep)
+  "Go to beginning of Nth paren pair.  INCLUSIVEP for cursor placement
+style."
   (interactive)
   (when (looking-at ")")
     (goto-char (- (point) 1)))
-  (goto-char (car (evil-lispops--get-range (or count 1) inclusivep))))
+  (goto-char (car (evil-lispops--get-range (or n 1) inclusivep))))
 
-(defun evil-lispops-goto-end (&optional count inclusivep)
-  "Go to end of paren pair.  COUNT to enable jumping to nth parent.
-INCLUSIVEP for cursor placement style."
+(defun evil-lispops-goto-end (&optional n inclusivep)
+  "Go to end of Nth paren pair.  INCLUSIVEP for cursor placement style."
   (interactive)
   (when (looking-at ")")
     (goto-char (- (point) 1)))
-  (goto-char (cadr (evil-lispops--get-range (or count 1) inclusivep))))
+  (goto-char (cadr (evil-lispops--get-range (or n 1) inclusivep))))
 
 (defun evil-lispops-open-beg ()
   "Open at beginning of paren pair."
   (interactive)
-  (progn
-    (if evil-lispops-open-inside
-        (evil-lispops-goto-beg)
-      (evil-lispops-goto-beg nil t))
-    (evil-insert 0)))
+  (evil-lispops-goto-beg nil (if evil-lispops-open-inside nil t))
+  (evil-insert 0))
 
 (defun evil-lispops-open-end ()
   "Open at end of paren pair."
   (interactive)
-  (progn
-    (if evil-lispops-open-inside
-        (evil-lispops-goto-end)
-      (evil-lispops-goto-end nil t))
-    (evil-insert 0)))
+  (evil-lispops-goto-end nil (if evil-lispops-open-inside nil t))
+  (evil-insert 0))
 
-(defun evil-lispops-goto-parent-beg (&optional count inclusivep)
-  "Go to beginning of parent paren pair.  Accepts COUNT.
-INCLUSIVEP for cursor placement style."
+(defun evil-lispops-goto-parent-beg (&optional n inclusivep)
+  "Go to beginning of Nth parent paren pair.  INCLUSIVEP for cursor
+placement style."
   (interactive "P")
   (when (looking-at "(")
-    (goto-char (+ (point) 1)))
-  (evil-lispops-goto-beg (1+ (or count 1)) inclusivep))
+    (goto-char (1+ (point))))
+  (evil-lispops-goto-beg (1+ (or n 1)) inclusivep))
 
-(defun evil-lispops-goto-parent-end (&optional count inclusivep)
-  "Go to end of parent paren pair.  Accepts COUNT.
-INCLUSIVEP for cursor placement style."
+(defun evil-lispops-goto-parent-end (&optional n inclusivep)
+  "Go to end of Nth parent paren pair.  INCLUSIVEP for cursor placement style."
   (interactive "P")
-  (evil-lispops-goto-end (1+ (or count 1)) inclusivep))
+  (evil-lispops-goto-end (1+ (or n 1)) inclusivep))
 
-(defun evil-lispops-open-parent-beg (&optional count)
-  "Open at beginning of parent paren pair.  Accepts COUNT."
+(defun evil-lispops-open-parent-beg (&optional n)
+  "Open at beginning Nth of parent paren pair."
   (interactive "P")
-  (let ((count (or count 1)))
-    (if evil-lispops-open-inside
-        (evil-lispops-goto-parent-beg count)
-      (evil-lispops-goto-parent-beg count t))
-    (evil-lispops-open-beg)))
+  (evil-lispops-goto-parent-beg (or n 1) (if evil-lispops-open-inside nil t))
+  (evil-lispops-open-beg))
 
-(defun evil-lispops-open-parent-end (&optional count)
-  "Open at end of parent paren pair.  Accepts COUNT."
+(defun evil-lispops-open-parent-end (&optional n)
+  "Open at end of Nth parent paren pair."
   (interactive "P")
-  (let ((count (or count 1))
-        (point (point)))
-    (if evil-lispops-open-inside
-        (evil-lispops-goto-parent-end count)
-      (evil-lispops-goto-parent-end count t))
+  (let ((point (point)))
+    (evil-lispops-goto-parent-end (or n 1) (if evil-lispops-open-inside nil t))
     (unless (eq (point) point)
       (evil-lispops-open-end))))
 
-(defun evil-lispops-goto-child-beg (&optional count goto-endp relativep)
-  "Go to beginning of child paren pair.  Accepts COUNT.
-GOTO-ENDP for the reverse operation.  RELATIVEP for relative child."
+(defun evil-lispops-goto-child-beg (&optional n reversep relativep)
+  "Go to beginning of Nth child paren pair.  REVERSEP to go to end.
+RELATIVEP for relative child."
   (interactive "P")
-  (let ((count (or count 1))
+  (let ((count (or n 1))
         (point (point)))
     (unless relativep (evil-lispops-goto-beg))
     (let ((parentrange (evil-lispops--get-range)))
@@ -204,160 +190,150 @@ GOTO-ENDP for the reverse operation.  RELATIVEP for relative child."
         (cl-decf count))
       (if (looking-at "(")
           (progn (goto-char (+ (point) 1))
-                 (when goto-endp (evil-lispops-goto-end)))
+                 (when reversep (evil-lispops-goto-end)))
         (goto-char point)))))
 
-(defun evil-lispops-goto-child-end (&optional count)
-  "Go to end of child paren pair.  Accepts COUNT."
+(defun evil-lispops-goto-child-end (&optional n)
+  "Go to end of Nth child paren pair."
   (interactive "P")
-  (evil-lispops-goto-child-beg (or count 1) t))
+  (evil-lispops-goto-child-beg (or n 1) t))
 
-(defun evil-lispops-open-child-beg (&optional count)
-  "Open at beginning of child paren pair.  Accepts COUNT."
+(defun evil-lispops-open-child-beg (&optional n)
+  "Open at beginning of Nth child paren pair."
   (interactive "P")
   (let ((point (point)))
-    (evil-lispops-goto-child-beg (or count 1))
+    (evil-lispops-goto-child-beg (or n 1))
     (unless (eq (point) point)
       (evil-lispops-open-beg))))
 
-(defun evil-lispops-open-child-end (&optional count)
-  "Open at end of child paren pair.  Accepts COUNT."
+(defun evil-lispops-open-child-end (&optional n)
+  "Open at end of Nth child paren pair."
   (interactive "P")
   (let ((point (point)))
-    (evil-lispops-goto-child-end (or count 1))
+    (evil-lispops-goto-child-end (or n 1))
     (unless (eq (point) point)
       (evil-lispops-open-end))))
 
-(defun evil-lispops-goto-right-adjacent-child-beg (&optional count)
-  "Go to beginning of right adjacent child paren pair.  Accepts COUNT."
+(defun evil-lispops-goto-right-adjacent-child-beg (&optional n)
+  "Go to beginning of Nth right adjacent child paren pair."
   (interactive "P")
-  (evil-lispops-goto-child-beg (or count 1) nil t))
+  (evil-lispops-goto-child-beg (or n 1) nil t))
 
-(defun evil-lispops-goto-right-adjacent-child-end (&optional count)
-  "Go to end of right adjacent child paren pair.  Accepts COUNT."
+(defun evil-lispops-goto-right-adjacent-child-end (&optional n)
+  "Go to end of Nth right adjacent child paren pair."
   (interactive "P")
-  (evil-lispops-goto-child-beg (or count 1) t t))
+  (evil-lispops-goto-child-beg (or n 1) t t))
 
-(defun evil-lispops-open-right-adjacent-child-beg (&optional count)
-  "Open at beginning of right adjacent child paren pair.  Accepts COUNT."
+(defun evil-lispops-open-right-adjacent-child-beg (&optional n)
+  "Open at beginning of Nth right adjacent child paren pair."
   (interactive "P")
   (let ((point (point)))
-    (evil-lispops-goto-child-beg (or count 1) nil t)
+    (evil-lispops-goto-child-beg (or n 1) nil t)
     (unless (eq (point) point)
       (evil-lispops-open-beg))))
 
-(defun evil-lispops-open-right-adjacent-child-end (&optional count)
-  "Open at end of right adjacent child paren pair.  Accepts COUNT."
+(defun evil-lispops-open-right-adjacent-child-end (&optional n)
+  "Open at end of Nth right adjacent child paren pair."
   (interactive "P")
   (let ((point (point)))
-    (evil-lispops-goto-child-beg (or count 1) t t)
+    (evil-lispops-goto-child-beg (or n 1) t t)
     (unless (eq (point) point)
       (evil-lispops-open-end))))
 
-(defun evil-lispops-goto-left-adjacent-child-beg (&optional count)
-  "Go to beginning of left adjacent child paren pair.  Accepts COUNT."
+(defun evil-lispops-goto-left-adjacent-child-beg (&optional n)
+  "Go to beginning of Nth left adjacent child paren pair."
   (interactive "P")
-  (let ((count (or count 1))
+  (let ((count (or n 1))
         (point (point))
         (parentrange (evil-lispops--get-range)))
     (while (> count 0)
-      (progn
-        (while (and (not (looking-at ")"))
-                    (> (point) (car parentrange)))
-          (evil-backward-WORD-end))
-        (evil-lispops-goto-beg nil t)
-        (cl-decf count)
-        (if (looking-at "(")
-            (evil-lispops-goto-beg)
-          (if (> (point) (car parentrange))
-              (goto-char point)))))))
+      (while (and (not (looking-at ")"))
+                  (> (point) (car parentrange)))
+        (evil-backward-WORD-end))
+      (evil-lispops-goto-beg nil t)
+      (cl-decf count)
+      (if (looking-at "(")
+          (evil-lispops-goto-beg)
+        (if (> (point) (car parentrange))
+            (goto-char point))))))
 
-(defun evil-lispops-goto-left-adjacent-child-end (&optional count)
-  "Go to end of left adjacent child paren pair.  Accepts COUNT."
+(defun evil-lispops-goto-left-adjacent-child-end (&optional n)
+  "Go to end of Nth left adjacent child paren pair."
   (interactive "P")
-  (progn
-    (evil-lispops-goto-left-adjacent-child-beg (or count 1))
-    (evil-lispops-goto-end)))
+  (evil-lispops-goto-left-adjacent-child-beg (or n 1))
+  (evil-lispops-goto-end))
 
-(defun evil-lispops-open-left-adjacent-child-beg (&optional count)
-  "Open at beginning of left adjacent child paren pair.  Accepts COUNT."
+(defun evil-lispops-open-left-adjacent-child-beg (&optional n)
+  "Open at beginning of Nth left adjacent child paren pair."
   (interactive "P")
-  (progn
-    (evil-lispops-goto-left-adjacent-child-end (or count 1))
-    (evil-lispops-open-beg)))
+  (evil-lispops-goto-left-adjacent-child-end (or n 1))
+  (evil-lispops-open-beg))
 
-(defun evil-lispops-open-left-adjacent-child-end (&optional count)
-  "Open at end of left adjacent child paren pair.  Accepts COUNT."
+(defun evil-lispops-open-left-adjacent-child-end (&optional n)
+  "Open at end of Nth left adjacent child paren pair."
   (interactive "P")
-  (progn
-    (evil-lispops-goto-left-adjacent-child-beg (or count 1))
-    (evil-lispops-open-end)))
+  (evil-lispops-goto-left-adjacent-child-beg (or n 1))
+  (evil-lispops-open-end))
 
-(defun evil-lispops-goto-right-sibling-beg (&optional count goto-endp)
-  "Go to beginning of right sibling paren pair.  Accepts COUNT.
-GOTO-ENDP for the reverse operation."
+(defun evil-lispops-goto-right-sibling-beg (&optional n reversep)
+  "Go to beginning of Nth right sibling paren pair.  REVERSEP to go to end."
   (interactive "P")
-  (let ((count (or count 1))
+  (let ((count (or n 1))
         (point (point)))
     (evil-lispops-goto-end)
     (goto-char (+ (point) 1))
     (if (looking-at ")")
         (goto-char point)
-      (if goto-endp
+      (if reversep
           (evil-lispops-goto-right-adjacent-child-end count)
         (evil-lispops-goto-right-adjacent-child-beg count)))))
 
-(defun evil-lispops-goto-right-sibling-end (&optional count)
-  "Go to end of right sibling paren pair.  Accepts COUNT."
+(defun evil-lispops-goto-right-sibling-end (&optional n)
+  "Go to end of Nth right sibling paren pair."
   (interactive "P")
-  (evil-lispops-goto-right-sibling-beg (or count 1) t))
+  (evil-lispops-goto-right-sibling-beg (or n 1) t))
 
-(defun evil-lispops-open-right-sibling-beg (&optional count)
-  "Open at end of right sibling paren pair.  Accepts COUNT."
+(defun evil-lispops-open-right-sibling-beg (&optional n)
+  "Open at end of Nth right sibling paren pair."
   (interactive "P")
-  (progn
-    (evil-lispops-goto-right-sibling-beg (or count 1))
-    (evil-lispops-open-beg)))
+  (evil-lispops-goto-right-sibling-beg (or n 1))
+  (evil-lispops-open-beg))
 
-(defun evil-lispops-open-right-sibling-end (&optional count)
-  "Go to end of right sibling paren pair.  Accepts COUNT."
+(defun evil-lispops-open-right-sibling-end (&optional n)
+  "Go to end of Nth right sibling paren pair."
   (interactive "P")
-  (progn
-    (evil-lispops-goto-right-sibling-beg (or count 1) t)
-    (evil-lispops-open-end)))
+  (evil-lispops-goto-right-sibling-beg (or n 1) t)
+  (evil-lispops-open-end))
 
-(defun evil-lispops-goto-left-sibling-beg (&optional count goto-endp)
-  "Go to beginning of left sibling paren pair.  Accepts COUNT.
-GOTO-ENDP for the reverse operation."
+(defun evil-lispops-goto-left-sibling-beg (&optional n reversep)
+  "Go to beginning of Nth left sibling paren pair.  REVERSEP to go to end."
   (interactive "P")
-  (let ((count (or count 1))
+  (let ((count (or n 1))
         (point (point)))
     (evil-lispops-goto-beg nil t)
     (if (looking-back "(" nil)
         (goto-char point)
       (goto-char (- (point) 1))
-      (if goto-endp
+      (if reversep
           (evil-lispops-goto-left-adjacent-child-end count)
         (evil-lispops-goto-left-adjacent-child-beg count)))))
 
-(defun evil-lispops-goto-left-sibling-end (&optional count)
-  "Go to end of left sibling paren pair.  Accepts COUNT."
+(defun evil-lispops-goto-left-sibling-end (&optional n)
+  "Go to end of Nth left sibling paren pair."
   (interactive "P")
-  (evil-lispops-goto-left-sibling-beg (or count 1) t))
+  (evil-lispops-goto-left-sibling-beg (or n 1) t))
 
-(defun evil-lispops-open-left-sibling-beg (&optional count)
-  "Open at end of left sibling paren pair.  Accepts COUNT."
+(defun evil-lispops-open-left-sibling-beg (&optional n)
+  "Open at end of Nth left sibling paren pair."
   (interactive "P")
-  (progn
-    (evil-lispops-goto-left-sibling-beg (or count 1))
-    (evil-lispops-open-beg)))
+  (evil-lispops-goto-left-sibling-beg (or n 1))
+  (evil-lispops-open-beg))
 
-(defun evil-lispops-open-left-sibling-end (&optional count)
-  "Go to end of left sibling paren pair.  Accepts COUNT."
+(defun evil-lispops-open-left-sibling-end (&optional n)
+  "Go to end of Nth left sibling paren pair."
   (interactive "P")
-  (progn
-    (evil-lispops-goto-left-sibling-beg (or count 1) t)
-    (evil-lispops-open-end)))
+  (evil-lispops-goto-left-sibling-beg (or n 1) t)
+  (evil-lispops-open-end))
 
 ;;;; Mode
 (defun evil-lispops--define-key (binding function)
@@ -383,7 +359,7 @@ Needs FUNCTION that will be bound to BINDING."
 
 (define-minor-mode evil-lispops-mode
   "Edit Lisp evilly.  Adds commands to edit and navigate sexps."
-  :lighter nil
+  :lighter " lispops"
   :group 'evil-lispops
   (evil-lispops-setup))
 
