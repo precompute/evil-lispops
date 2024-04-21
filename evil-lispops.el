@@ -5,8 +5,8 @@
 ;; Author: precompute <git@precompute.net>
 ;; URL: https://github.com/precompute/evil-lispops
 ;; Created: April 1, 2024
-;; Modified: April 18, 2024
-;; Version: 0.10.0
+;; Modified: April 21, 2024
+;; Version: 0.10.1
 ;; Package-Requires: ((emacs "26.1") (evil "1.2.10"))
 
 ;; evil-lispops - operations for editing lisp evilly
@@ -72,29 +72,30 @@
 
 ;;;; Variables
 (defcustom evil-lispops-open-inside t
-  "If non-nil, evil-lispops-open-* commands open inside the bracket.  If nil,
-they open outside the bracket."
+  "If non-nil, evil-lispops-open-* commands open inside the bracket.
+If nil, they open outside the bracket."
   :type 'boolean
   :group 'evil-lispops)
 
 ;;;; Helper Functions
 (defun evil-lispops--get-range (&optional n inclusivep)
-  "Use `evil-select-paren’ to get the value of points at the ends of a
-paren pair.  Accepts count N.  INCLUSIVEP determines whether range is
-inside the paren block or outside."
+  "Get the value of points at ends of a paren pair.
+Uses `evil-select-paren’. Accepts count N.  INCLUSIVEP determines
+whether range is inside the paren block or outside."
   (evil-select-paren ?\( ?\) (point) 0 nil (or n 1) inclusivep))
 
 ;;;; Operators:
 (defun evil-lispops-goto-beg (&optional n inclusivep)
-  "Go to beginning of Nth paren pair.  INCLUSIVEP for cursor placement
-style."
+  "Go to beginning of Nth paren pair.
+INCLUSIVEP for cursor placement style."
   (interactive)
   (when (looking-at ")")
     (goto-char (- (point) 1)))
   (goto-char (car (evil-lispops--get-range (or n 1) inclusivep))))
 
 (defun evil-lispops-goto-end (&optional n inclusivep)
-  "Go to end of Nth paren pair.  INCLUSIVEP for cursor placement style."
+  "Go to end of Nth paren pair.
+INCLUSIVEP for cursor placement style."
   (interactive)
   (when (looking-at ")")
     (goto-char (- (point) 1)))
@@ -113,15 +114,16 @@ style."
   (evil-insert 0))
 
 (defun evil-lispops-goto-parent-beg (&optional n inclusivep)
-  "Go to beginning of Nth parent paren pair.  INCLUSIVEP for cursor
-placement style."
+  "Go to beginning of Nth parent paren pair.
+INCLUSIVEP for cursor placement style."
   (interactive "P")
   (when (looking-at "(")
     (goto-char (1+ (point))))
   (evil-lispops-goto-beg (1+ (or n 1)) inclusivep))
 
 (defun evil-lispops-goto-parent-end (&optional n inclusivep)
-  "Go to end of Nth parent paren pair.  INCLUSIVEP for cursor placement style."
+  "Go to end of Nth parent paren pair.
+INCLUSIVEP for cursor placement style."
   (interactive "P")
   (evil-lispops-goto-end (1+ (or n 1)) inclusivep))
 
@@ -309,7 +311,6 @@ RELATIVEP for relative child."
 
 (defun evil-lispops--bind-keys ()
   "Bind keys for `evil-lispops-mode’."
-  (interactive)
   (evil-define-key 'normal evil-lispops-mode-map
     (kbd ">>") #'evil-shift-right
     (kbd "<<") #'evil-shift-left
