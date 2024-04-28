@@ -14,9 +14,7 @@ The mode map =evil-lispops-mode-map= uses the ~<~ and ~>~ keys.  The =evil-shift
 #+BEGIN_SRC elisp
 (use-package evil-lispops
   :after evil
-  :hook (emacs-lisp-mode . evil-lispops-mode)
-  :config
-  (evil-lispops-setup))
+  :hook (emacs-lisp-mode . evil-lispops-mode))
 #+END_SRC
 
 ** Tentative layout:

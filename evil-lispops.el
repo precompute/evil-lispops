@@ -5,8 +5,8 @@
 ;; Author: precompute <git@precompute.net>
 ;; URL: https://github.com/precompute/evil-lispops
 ;; Created: April 1, 2024
-;; Modified: April 21, 2024
-;; Version: 0.10.1
+;; Modified: April 28, 2024
+;; Version: 0.10.2
 ;; Package-Requires: ((emacs "26.1") (evil "1.2.10"))
 
 ;; evil-lispops - operations for editing lisp evilly
@@ -343,10 +343,7 @@ RELATIVEP for relative child."
     (kbd ">N") #'evil-lispops-goto-right-sibling-end
     (kbd "<N") #'evil-lispops-goto-right-sibling-beg))
 
-(defun evil-lispops-setup ()
-  "Setup bindings for `evil-lispops’."
-  (interactive)
-  (evil-lispops--bind-keys))
+(evil-lispops--bind-keys)
 
 ;;;###autoload
 (define-minor-mode evil-lispops-mode
@@ -355,4 +352,5 @@ RELATIVEP for relative child."
   :group 'evil-lispops)
 
 (provide 'evil-lispops)
+;; TODO: new functions for operating on paren-pair that starts / ends at Nth line.  Negative: up Positive: down 1 is 1 down, -1 is 1 up
 ;;; evil-lispops.el ends here
